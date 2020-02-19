@@ -302,7 +302,6 @@ class GeometricSMOTE(BaseOverSampler):
         return X_new, y_new
 
     def _fit_resample(self, X, y):
-        print("Kayathiri")
         # Validate estimator's parameters
         self._validate_estimator()
 
