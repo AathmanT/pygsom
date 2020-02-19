@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -36,7 +38,7 @@ def show_gsom(output, max_count,index_col,label_col):
 
     ax.set_title("GSOM Map")
     #plt.show()
-    plt.savefig("gsom.png",dpi=1200)
+    plt.savefig("output/gsom_"+datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")+".png",dpi=1200)
 
 
 # def _get_color_map(max_count, alpha=0.5):
