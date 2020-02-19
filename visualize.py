@@ -10,31 +10,33 @@ def show_gsom(output, max_count,index_col,label_col):
     #listed_color_map = _get_color_map(max_count, alpha=0.9)
 
     fig, ax = plt.subplots()
-    for index, i in output.iterrows():
-        x=i['x']
-        y=i['y']
-        if i['hit_count']>0:
+    for index, node in output.iterrows():
+        x=node['x']
+        y=node['y']
+        if node['hit_count']>0:
             #c='red'
             #label = ", ".join(map(str,i[index_col]))
             count_0 = 0
             count_1 = 0
-            label = ""
-            for id in i[index_col]:
-                if id == '1':
+            label_str = ""
+            labels = node[index_col]
+
+            for label in labels:
+                if label == '1':
                     count_1 += 1
-                if id == '0':
+                if label == '0':
                     count_0 += 1
             if count_1 != 0:
-                label = label + "1(" + str(count_1) + ")"
+                label_str = label_str + "1(" + str(count_1) + ")"
             if count_0 != 0:
-                label = label + "0(" + str(count_0) + ")"
+                label_str = label_str + "0(" + str(count_0) + ")"
         else:
-            label = ""
+            label_str = ""
             #c='yellow'
         ax.plot(x,y, 'o', color=findColor(count_0,count_1),markersize=1)
-        ax.annotate(label, (x, y), fontsize=2)
-        print("{},{}-{}".format(x, y,label))
-
+        # ax.annotate(label_str, (x, y), fontsize=2)
+        print("{},{}  ==> {}".format(x, y,label_str))
+        plt.text(x, y + 0.1, label_str, fontsize=2)
 
     ax.set_title("GSOM Map")
     #plt.show()
