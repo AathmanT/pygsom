@@ -5,7 +5,7 @@ import scipy
 from tqdm import tqdm
 import math
 from visualize import show_gsom
-
+from gsmote import GSMOTE
 data_filename = "data/zoo.txt".replace('\\', '/')
 
 
@@ -317,6 +317,7 @@ class GSOM:
             self.smooth(data, radius_exp, current_learning_rate)
 
     def predict(self, data, index_col, label_col):
+    # def predict(self, data_n, y_f):
         """
         Identify the winner nodes for test dataset
         Predict the winning node for each data point and create a pandas dataframe
@@ -332,7 +333,9 @@ class GSOM:
         weight_columns.remove(label_col)
         weight_columns.remove(index_col)
         data_n = data[weight_columns].to_numpy()
+
         data_out = pd.DataFrame(data[[label_col,index_col]])
+        print(data_out)
         # Identify winners
         out = scipy.spatial.distance.cdist(self.node_list[:self.node_count], data_n, self.distance)
         data_out["output"] =out.argmin(axis=0)
@@ -350,14 +353,55 @@ class GSOM:
 
         return self.node_labels
 
+    def predict1(self, data_n, data_out, index_col, label_col):
+    # def predict(self, data_n, y_f):
+        """
+        Identify the winner nodes for test dataset
+        Predict the winning node for each data point and create a pandas dataframe
+        need to provide both index column and label column
+        :param data:
+        :param index_col:
+        :param label_col:
+        :return:
+        """
+        #y1 = np.copy(y_f)
+        #data_out = pd.DataFrame(data=np.concatenate(y_f,y1, axis=1), columns=[index_col, label_col])
+        # Identify winners
+        out = scipy.spatial.distance.cdist(self.node_list[:self.node_count], data_n, self.distance)
+        data_out["output"] =out.argmin(axis=0)
 
+        grp_output =data_out.groupby("output")
+        dn = grp_output[index_col].apply(list).reset_index()
+        dn[label_col] = grp_output[label_col].apply(list)
+        dn["hit_count"] = data_out[index_col].apply(lambda x: len(x))
+        dn["x"] = dn["output"].apply(lambda x: self.node_coordinate[x, 0])
+        dn["y"] = dn["output"].apply(lambda x: self.node_coordinate[x, 1])
+        hit_max_count = dn["hit_count"].max()
+        self.node_labels=dn
+        # display map
+        show_gsom(self.node_labels, hit_max_count,index_col,label_col)
+
+        return self.node_labels
 if __name__ == '__main__':
     np.random.seed(1)
     df = pd.read_csv(data_filename)
     print(df.shape)
-    data_training = df.iloc[:, 1:17]
-    gsom = GSOM(.83, 16, max_radius=4)
-    gsom.fit(data_training.to_numpy(), 100, 50)
-    gsom.predict(df,"Name","label")
+    #
+    # data_training = df.iloc[:, 1:17]
+    # gsom = GSOM(.83, 16, max_radius=4)
+    # gsom.fit(data_training.to_numpy(), 100, 50)
+    # x= (data_training.to_numpy())
+    # gsom.predict(df,"Name","label")
 
+
+    X_f,y_f = GSMOTE.OverSample()
+    y_f = y_f.astype(int)
+    y1 = np.copy(y_f)
+    y =  np.column_stack([y1,y_f])
+    labels = ["Name", "label"]
+    y = np.vstack((labels,y))
+    frame = pd.DataFrame(y[1:,:],columns=y[0,:])
+    gsom1 = GSOM(.83, X_f.shape[1], max_radius=4)
+    gsom1.fit(X_f, 100, 50)
+    gsom1.predict1(X_f,frame,"Name","label")
     print("complete")
