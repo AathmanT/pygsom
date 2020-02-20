@@ -1,7 +1,7 @@
 from sklearn.metrics import confusion_matrix
 import math
 
-def evaluate(Y_test,y_pred):
+def evaluate(classifier,Y_test,y_pred):
     tn, fp, fn, tp = confusion_matrix(Y_test.astype(int), y_pred).ravel()
 
     precision = tp / (tp+fp)
@@ -11,6 +11,7 @@ def evaluate(Y_test,y_pred):
     g_mean = math.sqrt(tp*tn/interVal)
     AUC = (tp/(tp+fn)+tn/(tn+fp))/2
 
+    print("\nClassifier: "+ classifier)
     print("f_score: " + str(f_score))
     print("g_mean: " + str(g_mean))
-    print("AUC value: "+ str(AUC))
+    print("AUC value: "+ str(AUC) +"\n")
