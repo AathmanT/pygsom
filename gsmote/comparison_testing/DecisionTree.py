@@ -1,26 +1,27 @@
-# Simple Linear Regression
 
 # Importing the libraries
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 import sys
 
 from xlwt.antlr import ifelse
 
 from gsmote import GSMOTE
 from gsmote import preprocessing as pp
+from gsmote.comparison_testing import Evaluator
 sys.path.append('../../')
 
-data_filename = "../data/adult2.csv".replace('\\', '/')
+data_filename = "../../data/adult.csv".replace('\\', '/')
 X,y = pp.preProcess(data_filename)
+
 from sklearn.model_selection import train_test_split
 X_t, X_test, y_t, y_test = train_test_split(X, y, test_size = 1/4, random_state = 0)
 
 X_train,y_train = GSMOTE.OverSample(X_t,y_t)
+# X_train,y_train = X_t,y_t
+
 # Fitting Simple Linear Regression to the Training set
-from sklearn.linear_model import LinearRegression
-regressor = LinearRegression()
+from sklearn.tree import DecisionTreeRegressor
+regressor = DecisionTreeRegressor(random_state = 0)
 regressor.fit(X_train, y_train)
 
 # Predicting the Test set results
@@ -32,7 +33,7 @@ from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test.astype(int), y_pred)
 print(cm)
 
-
+Evaluator.evaluate(y_test, y_pred)
 
 # # Visualising the Training set results
 # plt.scatter(X_train, y_train, color = 'red')
