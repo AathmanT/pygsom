@@ -396,6 +396,7 @@ if __name__ == '__main__':
 
     X,y = pp.preProcess(data_filename)
     X_f,y_f = GSMOTE.OverSample(X,y)
+    # X_f,y_f = X,y
     y_f = y_f.astype(int)
     y1 = np.copy(y_f)
     y =  np.column_stack([y1,y_f])

@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from gsmote.comparison_testing.Evaluator import evalute
+from gsmote.comparison_testing.Evaluator import evaluate
 import gsmote.preprocessing as pp
 from gsmote import GSMOTE as gs
 import sys
@@ -25,7 +25,7 @@ def linear_training(X,y):
     y_pred  = np.where(y_predict>0.5,1,0)
     print(y_pred)
 
-    evalute(y_test,y_pred)
+    evaluate(y_test,y_pred)
 
 linear_training(X,y)
 
