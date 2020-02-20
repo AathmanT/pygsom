@@ -1,7 +1,7 @@
 from sklearn.metrics import confusion_matrix
 import math
 
-def evalute(Y_test,y_pred):
+def evaluate(Y_test,y_pred):
     tn, fp, fn, tp = confusion_matrix(Y_test.astype(int), y_pred).ravel()
 
     precision = tp / (tp+fp)

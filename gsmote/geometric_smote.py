@@ -194,13 +194,14 @@ class GeometricSMOTE(BaseOverSampler):
             self.nns_pos_ = check_neighbors_object(
                 'nns_positive', self.k_neighbors, additional_neighbor=1
             )
+            n=self.nns_pos_
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
         # Create nearest neighbors object for negative class
         if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
-
+            n=self.nn_neg_
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """A support function that returns an artificials samples inside
         the geometric region defined by nearest neighbors.
@@ -308,6 +309,8 @@ class GeometricSMOTE(BaseOverSampler):
         # Copy data
         X_resampled, y_resampled = X.copy(), y.copy()
 
+        #set number of samples to be generated
+        k=self.sampling_strategy_.items()
         # Resample data
         for class_label, n_samples in self.sampling_strategy_.items():
 
