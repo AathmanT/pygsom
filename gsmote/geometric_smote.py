@@ -4,11 +4,13 @@
 # License: BSD 3 clause
 
 import numpy as np
+from imblearn.utils._validation import _count_class_sample
 from numpy.linalg import norm
 from sklearn.utils import check_random_state
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution
 from imblearn.utils._docstring import _random_state_docstring
+import collections
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
@@ -302,6 +304,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         return X_new, y_new
 
+
     def _fit_resample(self, X, y):
         # Validate estimator's parameters
         self._validate_estimator()
@@ -309,11 +312,10 @@ class GeometricSMOTE(BaseOverSampler):
         # Copy data
         X_resampled, y_resampled = X.copy(), y.copy()
 
-        #set number of samples to be generated
-        k=self.sampling_strategy_.items()
         # Resample data
-        for class_label, n_samples in self.sampling_strategy_.items():
-
+        for class_label, n_samples in self._minority_oversample(y).items():
+            if n_samples < 0:
+                n_samples = 0
             # Apply gsmote mechanism
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
@@ -325,5 +327,17 @@ class GeometricSMOTE(BaseOverSampler):
 
         return X_resampled, y_resampled
 
+    def _minority_oversample(self, y):
+        target_stats = _count_class_sample(y)
+        n_sample_majority = max(target_stats.values())
+        class_minority = min(target_stats, key=target_stats.get)
+
+        sampling_strategy = {
+            key: int(n_sample_majority * 0.3) - value
+            for (key, value) in target_stats.items()
+            if key == class_minority
+        }
+        sampling_strategy = collections.OrderedDict(sampling_strategy)
+        return sampling_strategy
 
 

@@ -347,7 +347,7 @@ class GSOM:
         show_gsom(self.node_labels, hit_max_count,index_col,label_col)
 
         return self.node_labels
-    
+
 if __name__ == '__main__':
     # np.random.seed(1)
     # df = pd.read_csv(data_filename)

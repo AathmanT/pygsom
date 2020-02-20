@@ -7,7 +7,7 @@ from gsmote import preprocessing as pp
 from gsmote.comparison_testing import Evaluator
 sys.path.append('../../')
 
-data_filename = "../../data/adultmini.csv".replace('\\', '/')
+data_filename = "../../data/adult.csv".replace('\\', '/')
 X,y = pp.preProcess(data_filename)
 
 from sklearn.model_selection import train_test_split
@@ -22,7 +22,6 @@ classifier.fit(X_train, y_train)
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test).astype(int)
-print(y_pred)
 
 #find confusion matrix
 from sklearn.metrics import confusion_matrix
