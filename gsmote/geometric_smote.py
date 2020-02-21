@@ -166,6 +166,7 @@ class GeometricSMOTE(BaseOverSampler):
         selection_strategy='combined',
         k_neighbors=5,
         n_jobs=1,
+        sampling_rate=0.3,
     ):
         super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy)
         self.random_state = random_state
@@ -174,6 +175,7 @@ class GeometricSMOTE(BaseOverSampler):
         self.selection_strategy = selection_strategy
         self.k_neighbors = k_neighbors
         self.n_jobs = n_jobs
+        self.sampling_rate = sampling_rate
 
     def _validate_estimator(self):
         """Create the necessary attributes for Geometric SMOTE."""
@@ -204,6 +206,7 @@ class GeometricSMOTE(BaseOverSampler):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
             n=self.nn_neg_
+
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """A support function that returns an artificials samples inside
         the geometric region defined by nearest neighbors.
@@ -333,7 +336,7 @@ class GeometricSMOTE(BaseOverSampler):
         class_minority = min(target_stats, key=target_stats.get)
 
         sampling_strategy = {
-            key: int(n_sample_majority * 0.3) - value
+            key: int(n_sample_majority * (self.sampling_rate/(1-self.sampling_rate))) - value
             for (key, value) in target_stats.items()
             if key == class_minority
         }
