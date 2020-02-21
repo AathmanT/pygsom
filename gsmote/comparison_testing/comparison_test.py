@@ -5,19 +5,25 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeRegressor
+from gsmote import GSMOTE
 from gsmote.comparison_testing.Evaluator import evaluate
 import gsmote.preprocessing as pp
-from gsmote import GSMOTE
+from gsmote.comparison_testing.compare_visual import  visualize_data as vs
 import sys
 sys.path.append('../../')
 
-date_file = "../../data/echoli.csv".replace('\\','/')
-X,y = pp.pre_process(date_file)
+date_file = "../../data/adultmini.csv".replace('\\','/')
+X,y = pp.preProcess(date_file)
 
 def linear_training(X,y):
     X_t, X_test, y_t, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
+    # Visualize original data
+    vs(X_t, y_t, "Original data")
+    # oversample
     X_train,y_train = GSMOTE.OverSample(X_t,y_t)
+    # visualize oversampled data
+    vs(X_train, y_train, "Oversampled ")
                                                                                                                    
     # Fitting Simple Linear Regression to the Training set
     regressor = LinearRegression()
@@ -55,11 +61,6 @@ def KNN(X,y):
 
     # Predicting the Test set results
     y_pred = classifier.predict(X_test).astype(int)
-
-    # find confusion matrix
-    from sklearn.metrics import confusion_matrix
-    cm = confusion_matrix(y_test.astype(int), y_pred)
-    print(cm)
 
     evaluate("KNN",y_test, y_pred)
 
