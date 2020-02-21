@@ -202,6 +202,7 @@ class GeometricSMOTE(BaseOverSampler):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
             n=self.nn_neg_
+
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """A support function that returns an artificials samples inside
         the geometric region defined by nearest neighbors.

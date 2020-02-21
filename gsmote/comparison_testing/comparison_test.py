@@ -6,6 +6,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from gsmote.comparison_testing.Evaluator import evaluate
 import gsmote.preprocessing as pp
 from gsmote import GSMOTE as gs
+from gsmote.comparison_testing.compare_visual import  visualize_data as vs
+
 import sys
 sys.path.append('../../')
 
@@ -15,7 +17,14 @@ X,y = pp.preProcess(date_file)
 def linear_training(X,y):
     X_t, X_test, y_t, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
+    # Visualize original data
+    vs(X_t, y_t, "Original data")
+
+    # oversample
     X_train,y_train = gs.OverSample(X_t,y_t)
+    
+    # visualize oversampled data
+    vs(X_train, y_train, "Oversampled ")
                                                                                                                    
     # Fitting Simple Linear Regression to the Training set
     regressor = LinearRegression()
@@ -31,6 +40,8 @@ def gradient_boosting(X,y):
      X_t, X_test, y_t, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
      X_train,y_train = gs.OverSample(X_t,y_t)
+
+
 
      # Fitting Gradient boosting
      gbc = GradientBoostingClassifier (n_estimators=100, learning_rate = 0.01, max_depth = 3)
