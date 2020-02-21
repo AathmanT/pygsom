@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import pairwise_distances
+from collections import Counter
 import scipy
 from tqdm import tqdm
 import math
 from visualize import show_gsom
 from gsmote import GSMOTE
-from gsmote import preprocessing as pp
-data_filename = "data/adultmini.csv".replace('\\', '/')
+data_filename = "data/zoo.txt".replace('\\', '/')
 
 
 class GSOM:
@@ -318,7 +318,6 @@ class GSOM:
             self.smooth(data, radius_exp, current_learning_rate)
 
 
-
     def predict(self, data_X, data_y, index_col, label_col):
         """
         Identify the winner nodes for test dataset
@@ -329,9 +328,13 @@ class GSOM:
         :param label_col:
         :return:
         """
-        #y1 = np.copy(y_f)
-        #data_out = pd.DataFrame(data=np.concatenate(y_f,y1, axis=1), columns=[index_col, label_col])
-        # Identify winners
+
+        r = self.node_count
+        q=self.node_list[:self.node_count]
+        w=data_X
+        e=self.distance
+
+
         out = scipy.spatial.distance.cdist(self.node_list[:self.node_count], data_X, self.distance)
         data_y["output"] =out.argmin(axis=0)
 
@@ -344,24 +347,131 @@ class GSOM:
         hit_max_count = dn["hit_count"].max()
         self.node_labels=dn
         # display map
+
+        # print(dn.loc[6, :])
+        # print(dn.loc[14,:])
         show_gsom(self.node_labels, hit_max_count,index_col,label_col)
 
         return self.node_labels
 
+    def predict_values(self, data,data_y):
+        """
+        method to test the GSOM map
+        :param data:
+        :param training_iterations:
+        :param smooth_iterations:
+        """
+        y_pred = []
+        # Iterate all data points
+        for data_index in range(data.shape[0]):
+            y_pred.append(self.winner_identification_and_neighbourhood_update_predict_values(
+                data_index, data, data_y))
+
+        return y_pred
+
+    def finalize_gsom_label(self):
+
+        all_coordinates = self.node_labels.iloc[:, 4:]
+        all_coordinates = all_coordinates.astype(int)
+
+        neutral_indexes = []
+
+        for index, node in self.node_labels.iterrows():
+            x = node['x']
+            y = node['y']
+            if node['hit_count'] > 0:
+                # c='red'
+                # label = ", ".join(map(str,i[index_col]))
+                count_0 = 0
+                count_1 = 0
+                labels = node["Name"]
+
+                for label in labels:
+                    if label == '1':
+                        count_1 += 1
+                    if label == '0':
+                        count_0 += 1
+                if count_1 > count_0:
+                    self.node_labels.loc[index, "Name"] = '1'
+                elif count_0 > count_1:
+                    self.node_labels.loc[index, "Name"] = '0'
+                else:
+                    self.node_labels.loc[index, "Name"] = 'N'
+                    neutral_indexes.append(index)
+
+        for index in neutral_indexes:
+
+            tester = all_coordinates.loc[index].to_numpy().reshape(1, 2)
+            distances = scipy.spatial.distance.cdist(all_coordinates, tester, self.distance)
+
+            distances = distances.argsort(axis=0)[:6]
+
+            class_counter = Counter()
+            for distance in distances:
+                if (distance != index):
+                    label_of_node = self.node_labels.loc[distance, "Name"].values[0]
+                    class_counter[label_of_node] += 1
+            x = class_counter.most_common(1)[0][0]
+            self.node_labels.loc[index, "Name"] = x
+
+
+    def winner_identification_and_neighbourhood_update_predict_values(self, data_index, data,data_y):
+
+        # q=self.node_list
+        # w=self.node_count
+        # e=self.node_list[:self.node_count]
+        # r=data
+        # t=data_index
+        # y=data[data_index, :]
+        # zxcc=data_y
+
+        out = scipy.spatial.distance.cdist(self.node_list[:self.node_count], data[data_index, :].reshape(1, self.dimentions), self.distance)
+
+        rmu_index = out.argmin()  # get winner node index
+
+
+        all_coordinates = self.node_labels.iloc[:, 4:]
+        all_coordinates = all_coordinates.astype(int)
+
+        # get winner node coordinates
+        rmu_x = int(self.node_coordinate[rmu_index][0])
+        rmu_y = int(self.node_coordinate[rmu_index][1])
+
+
+        winner_coordinates = np.array([rmu_x, rmu_y])
+        neighbors = scipy.spatial.distance.cdist(all_coordinates, winner_coordinates.reshape(1, 2), self.distance)
+
+        nearest_neighbors_indexes = neighbors.argsort(axis=0)[:6]
+
+        # # neighbor1=self.node_labels.loc[[nearest_neighbors_indexes[0:6,0]]]
+        # neighbor1 = self.node_labels.loc[nearest_neighbors_indexes[0, 0], "Name"]
+        # neighbor2 = self.node_labels.loc[nearest_neighbors_indexes[1, 0], "Name"]
+        # neighbor3 = self.node_labels.loc[nearest_neighbors_indexes[2, 0], "Name"]
+        # neighbor4 = self.node_labels.loc[nearest_neighbors_indexes[3, 0], "Name"]
+        # neighbor5 = self.node_labels.loc[nearest_neighbors_indexes[4, 0], "Name"]
+
+        class_counter2 = Counter()
+        for i in range(0,5):
+            z=self.node_labels.loc[nearest_neighbors_indexes[i, 0], "Name"]
+            class_counter2[z]+=1
+        asag=class_counter2.most_common(1)
+        afaf=data_y.iloc[data_index,1]
+        print("Predicted :",class_counter2.most_common(1)[0][0],"Actual",afaf)
+        return class_counter2.most_common(1)[0][0]
+
 if __name__ == '__main__':
-    # np.random.seed(1)
-    # df = pd.read_csv(data_filename)
-    # print(df.shape)
-    #
+    np.random.seed(1)
+    df = pd.read_csv(data_filename)
+    print(df.shape)
+
     # data_training = df.iloc[:, 1:17]
     # gsom = GSOM(.83, 16, max_radius=4)
     # gsom.fit(data_training.to_numpy(), 100, 50)
     # x= (data_training.to_numpy())
     # gsom.predict(df,"Name","label")
 
-    X,y = pp.preProcess(data_filename)
-    X_f,y_f = GSMOTE.OverSample(X,y)
-    # X_f,y_f = X,y
+
+    X_f,y_f = GSMOTE.OverSample()
     y_f = y_f.astype(int)
     y1 = np.copy(y_f)
     y =  np.column_stack([y1,y_f])
@@ -369,6 +479,12 @@ if __name__ == '__main__':
     y = np.vstack((labels,y))
     frame = pd.DataFrame(y[1:,:],columns=y[0,:])
     gsom1 = GSOM(.83, X_f.shape[1], max_radius=4)
-    gsom1.fit(X_f, 100, 50)
-    gsom1.predict(X_f,frame,"Name","label")
+
+
+    gsom1.fit(X_f[:-10,:], 100, 50)
+    gsom1.predict(X_f[:-10,:],frame.iloc[:-10,:],"Name","label")
+    gsom1.finalize_gsom_label()
+
+    y_pred = gsom1.predict_values(X_f[-10:,:],frame.iloc[-10:,:])
+    print(y_pred)
     print("complete")
