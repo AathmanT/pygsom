@@ -7,8 +7,8 @@ from tqdm import tqdm
 import math
 from visualize import show_gsom
 from gsmote import GSMOTE
-data_filename = "data/zoo.txt".replace('\\', '/')
-
+from gsmote import preprocessing as pp
+data_filename = "data/adultmini.csv".replace('\\', '/')
 
 class GSOM:
 
@@ -470,8 +470,8 @@ if __name__ == '__main__':
     # x= (data_training.to_numpy())
     # gsom.predict(df,"Name","label")
 
-
-    X_f,y_f = GSMOTE.OverSample()
+    X, y = pp.preProcess(data_filename)
+    X_f, y_f = GSMOTE.OverSample(X, y)
     y_f = y_f.astype(int)
     y1 = np.copy(y_f)
     y =  np.column_stack([y1,y_f])
