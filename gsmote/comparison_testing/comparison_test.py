@@ -20,6 +20,7 @@ def linear_training(X,y):
 
     # Visualize original data
     vs(X_t, y_t, "Original data")
+
     # oversample
     X_train,y_train = GSMOTE.OverSample(X_t,y_t)
     # visualize oversampled data
@@ -80,9 +81,21 @@ def decision_tree(X, y):
 
     evaluate("Decision Tree", y_test, y_pred)
 
+def MLPClassifier(X,y):
+    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+
+    # Fitting MLPClassifier to the Training set
+    from sklearn.neural_network import MLPClassifier
+    mlp = MLPClassifier(hidden_layer_sizes=(10, 10, 10), max_iter=1000,solver='lbfgs', alpha=1e-5,
+                    random_state=1)
+    mlp.fit(X_train, y_train)
+    y_pred = mlp.predict(X_test).astype(int)
+
+    evaluate("MLPClassifier", y_test, y_pred)
 
 linear_training(X,y)
 gradient_boosting(X,y)
 KNN(X,y)
 decision_tree(X,y)
-
+MLPClassifier(X,y)
