@@ -10,7 +10,7 @@ import gsmote.preprocessing as pp
 # Generate the dataset
 from sklearn.model_selection import train_test_split
 
-date_file = "../../data/adult.csv"
+date_file = "../../data/adultmini.csv"
 X,y = pp.preProcess(date_file)
 
 X, X_t, y, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
