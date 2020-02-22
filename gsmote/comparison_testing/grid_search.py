@@ -36,8 +36,6 @@ class MeanClassifier(BaseEstimator,ClassifierMixin):
                                      sampling_rate= self.sampling_rate)
 
     def fit(self, X, y):
-        print(self.max_depth,self.learning_rate,self.n_estimators,self.sampling_rate,self.k_neighbors,
-              self.deformation_factor,self.truncation_factor)
         X_train, y_train = self.gsmote.fit_resample(X, y)
         self.regressor.fit(X_train, y_train)
         return self

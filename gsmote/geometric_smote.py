@@ -192,20 +192,20 @@ class GeometricSMOTE(BaseOverSampler):
             raise ValueError(
                 error_msg.format(SELECTION_STRATEGY, self.selection_strategy)
             )
+        # Create nearest neighbors object for mixed class
+        self.nn_mix_ = check_neighbors_object('nns_mixed',self.k_neighbors,additional_neighbor=1)
 
         # Create nearest neighbors object for positive class
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object(
                 'nns_positive', self.k_neighbors, additional_neighbor=1
             )
-            n=self.nns_pos_
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
         # Create nearest neighbors object for negative class
         if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
-            n=self.nn_neg_
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """A support function that returns an artificials samples inside
@@ -243,7 +243,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Force minority strategy if no negative class samples are present
         self.selection_strategy_ = (
-            'minority' if len(X) == len(X_pos) else self.selection_strategy
+            'minority' if (len(X_pos)/len(X)) == 1 else self.selection_strategy
         )
 
         # Minority or combined strategy
@@ -268,40 +268,55 @@ class GeometricSMOTE(BaseOverSampler):
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
 
+        #get combined neighbours
+        self.nn_mix_.fit(X)
+        points_mix = self.nn_mix_.kneighbors(X_pos)[1]
+
         # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
-        for ind, (row, col) in enumerate(zip(rows, cols)):
+        ind = 0
+        for (row, col) in (zip(rows, cols)):
+            while (ind < n_samples):
+                # Define center point
+                center = X_pos[row]
 
-            # Define center point
-            center = X_pos[row]
+                #change new strategy
+                count_min = 0
+                for index in points_mix[row]:
+                    if y[index] == pos_class_label:
+                        count_min = count_min + 1
 
-            # Minority strategy
-            if self.selection_strategy_ == 'minority':
-                surface_point = X_pos[points_pos[row, col]]
+                if(count_min != 0):
 
-            # Majority strategy
-            elif self.selection_strategy_ == 'majority':
-                surface_point = X_neg[points_neg[row, col]]
+                    # Minority strategy
+                    if self.selection_strategy_ == 'minority':
+                        surface_point = X_pos[points_pos[row, col]]
 
-            # Combined strategy
-            else:
-                surface_point_pos = X_pos[points_pos[row, col]]
-                surface_point_neg = X_neg[points_neg[row, 0]]
-                radius_pos = norm(center - surface_point_pos)
-                radius_neg = norm(center - surface_point_neg)
-                surface_point = (
-                    surface_point_neg if radius_pos > radius_neg else surface_point_pos
-                )
+                    # Majority strategy
+                    elif self.selection_strategy_ == 'majority':
+                        surface_point = X_neg[points_neg[row, col]]
 
-            # Append new sample
-            X_new[ind] = _make_geometric_sample(
-                center,
-                surface_point,
-                self.truncation_factor,
-                self.deformation_factor,
-                self.random_state_,
-            )
+                    # Combined strategy
+                    else:
+                        surface_point_pos = X_pos[points_pos[row, col]]
+                        surface_point_neg = X_neg[points_neg[row, 0]]
+                        radius_pos = norm(center - surface_point_pos)
+                        radius_neg = norm(center - surface_point_neg)
+                        surface_point = (
+                            surface_point_neg if radius_pos > radius_neg else surface_point_pos
+                        )
 
+                    # Append new sample
+                    X_new[ind] = _make_geometric_sample(
+                        center,
+                        surface_point,
+                        self.truncation_factor,
+                        self.deformation_factor,
+                        self.random_state_,
+                    )
+                    ind = ind + 1
+                else:
+                    ind = ind - 1
         # Create new samples for target variable
         y_new = np.array([pos_class_label] * len(samples_indices))
 
@@ -316,7 +331,7 @@ class GeometricSMOTE(BaseOverSampler):
         X_resampled, y_resampled = X.copy(), y.copy()
 
         # Resample data
-        for class_label, n_samples in self._minority_oversample(y).items():
+        for class_label, n_samples in self.min_oversample(y).items():
             if n_samples < 0:
                 n_samples = 0
             # Apply gsmote mechanism
@@ -330,7 +345,8 @@ class GeometricSMOTE(BaseOverSampler):
 
         return X_resampled, y_resampled
 
-    def _minority_oversample(self, y):
+    #find number of minority samples to generate
+    def min_oversample(self, y):
         target_stats = _count_class_sample(y)
         n_sample_majority = max(target_stats.values())
         class_minority = min(target_stats, key=target_stats.get)
@@ -343,4 +359,6 @@ class GeometricSMOTE(BaseOverSampler):
         sampling_strategy = collections.OrderedDict(sampling_strategy)
         return sampling_strategy
 
+    def findStrategy(self,row,neighbors):
+        return "minority"
 

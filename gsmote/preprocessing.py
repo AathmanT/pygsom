@@ -59,7 +59,6 @@ def pre_process(filename):
     X = df.iloc[:, [0, 1, 2, 3, 4, 5, 6]].values
     sc_X = StandardScaler()
     X = sc_X.fit_transform(X)
-    print(X)
     y = df.iloc[:,-1].values
     return X,y
 

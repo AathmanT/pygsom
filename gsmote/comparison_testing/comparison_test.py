@@ -52,7 +52,7 @@ def gradient_boosting(X,y):
      evaluate("Gradient Boosting",y_test,y_pred)
 
 def KNN(X,y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=1 / 4, random_state=0)
+    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     X_train, y_train = GSMOTE.OverSample(X_t, y_t)
     # X_train,y_train = X_t,y_t
     # Fitting Simple Linear Regression to the Training set
@@ -85,5 +85,4 @@ linear_training(X,y)
 gradient_boosting(X,y)
 KNN(X,y)
 decision_tree(X,y)
-
 
