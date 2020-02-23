@@ -13,7 +13,7 @@ import sys
 
 sys.path.append('../../')
 
-date_file = "../../data/adult2.csv".replace('\\', '/')
+date_file = "../../data/ecoli.csv".replace('\\', '/')
 X, y = pp.preProcess(date_file)
 
 

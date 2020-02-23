@@ -4,6 +4,9 @@ from gsmote import GeometricSMOTE
 from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
 from gsmote.comparison_testing.Evaluator import evaluate
+import sys
+
+sys.path.append('../../')
 
 class MeanClassifier(BaseEstimator,ClassifierMixin):
     """An example of classifier"""

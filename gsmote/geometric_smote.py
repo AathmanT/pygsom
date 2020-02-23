@@ -12,7 +12,7 @@ from imblearn.utils import check_neighbors_object, Substitution
 from imblearn.utils._docstring import _random_state_docstring
 import collections
 from sklearn.cluster import KMeans
-
+from gsmote.comparison_testing import compare_visual
 
 def _make_geometric_sample(
         center, surface_point, truncation_factor, deformation_factor, random_state
@@ -165,7 +165,7 @@ class GeometricSMOTE(BaseOverSampler):
             # selection_strategy='combined',
             k_neighbors=5,
             n_jobs=1,
-            sampling_rate=0.3,
+            sampling_rate=0.25,
     ):
         super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy)
         self.random_state = random_state
@@ -181,9 +181,10 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Check random state
         self.random_state_ = check_random_state(self.random_state)
+        print(self.random_state)
 
        # Create nearest neighbors object for mixed class
-        self.nn_mix_ = check_neighbors_object('nns_mixed', self.k_neighbors, additional_neighbor=1)
+        self.nn_mix_ = check_neighbors_object('nns_mixed', self.k_neighbors)
         # Create nearest neighbors of positive class
         self.nns_pos_ = check_neighbors_object('nns_positive', self.k_neighbors, additional_neighbor=1)
         self.nns_pos_.set_params(n_jobs=self.n_jobs)
@@ -223,6 +224,9 @@ class GeometricSMOTE(BaseOverSampler):
         # Select positive class samples
         X_pos = X[y == pos_class_label]
 
+        # Oversampling limit for minority class
+        subCluster_label, sampling_limitation = self.sub_clustering(X_pos, n_samples)
+
         # Get positive k_nearest points
         self.nns_pos_.fit(X_pos)
         points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
@@ -241,9 +245,9 @@ class GeometricSMOTE(BaseOverSampler):
 
        # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
-        ind = 0
-        for (row, col) in (zip(rows, cols)):
-            while (ind < n_samples):
+        for ind, (row, col) in enumerate(zip(rows, cols)):
+            created = False
+            while not created:
 
                 # Define center point
                 center = X_pos[row]
@@ -254,10 +258,10 @@ class GeometricSMOTE(BaseOverSampler):
                         count_min = count_min + 1
 
                 # check noisy point
-                if count_min != 0:
+                if count_min > 1:
 
                     # Minority strategy
-                    if count_min == len(points_mix):
+                    if count_min == points_mix.shape[1]:
                         surface_point = X_pos[points_pos[row, col]]
 
                     # Combined strategy
@@ -278,36 +282,48 @@ class GeometricSMOTE(BaseOverSampler):
                         self.deformation_factor,
                         self.random_state_,
                     )
-                    ind = ind + 1
+                    created = True
                 else:
-                    ind = ind - 1
+                    row=self.random_state_.randint(low=0, high=len(X_pos), size=1)[0]
+
+
         # Create new samples for target variable
         y_new = np.array([pos_class_label] * len(samples_indices))
-
         return X_new, y_new
 
-    def sub_clustering(self,X,y,pos_class_label, n_samples):
-
-        X_pos = X[y == pos_class_label]
-        kmeans = KMeans(n_clusters=5)
+    # Handles sub clustering
+    def sub_clustering(self, X_pos, n_samples):
+        num_clusters=5
+        num_samples = n_samples * 0.5
+        kmeans = KMeans(n_clusters=num_clusters)
         kmeans.fit(X_pos)
+        clusters=[]
+        range_oversample = []
         y_kmeans = kmeans.predict(X_pos)
-
+        for i in range(num_clusters):
+            cluster = X_pos[y_kmeans == i]
+            clusters.append(cluster)
+            range_oversample.append(int(len(cluster)*(num_samples/len(X_pos))))
+        return y_kmeans,range_oversample
 
     def _fit_resample(self, X, y):
         # Validate estimator's parameters
         self._validate_estimator()
-
         # Copy data
         X_resampled, y_resampled = X.copy(), y.copy()
         # Resample data
         for class_label, n_samples in self.min_oversample(y).items():
             if n_samples < 0:
                 n_samples = 0
+            # Approach by clustering
+            # clusters = self.sub_clustering(X,y,class_label)
             # Apply gsmote mechanism
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
-            # self.sub_clustering(X,y,class_label,n_samples)
-            # Append new data
+
+            # for cluster in clusters:
+            #     num_samples = int(n_samples*(len(cluster)/len([val for sublist in clusters for val in sublist])))
+            #     X_new, y_new = self._make_geometric_samples(X, y, class_label, num_samples, cluster)
+                # Append new data
             X_resampled, y_resampled = (
                 np.vstack((X_resampled, X_new)),
                 np.hstack((y_resampled, y_new)),
