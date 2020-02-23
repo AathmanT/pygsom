@@ -1,4 +1,7 @@
 # Importing the libraries
+# import sys
+# sys.path.append('/content/pygsom/')
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -14,6 +17,8 @@ import sys
 sys.path.append('../../')
 
 date_file = "../../data/ecoli.csv".replace('\\', '/')
+# date_file = "content/pygsom/data/ecoli.csv".replace('\\', '/')
+
 X, y = pp.preProcess(date_file)
 
 

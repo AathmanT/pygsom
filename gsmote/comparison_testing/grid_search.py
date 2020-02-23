@@ -1,3 +1,6 @@
+# import sys
+# sys.path.append('/content/pygsom/')
+
 from sklearn.base import BaseEstimator, ClassifierMixin
 import gsmote.preprocessing as pp
 from gsmote import GeometricSMOTE
@@ -58,6 +61,8 @@ class MeanClassifier(BaseEstimator,ClassifierMixin):
 from sklearn.model_selection import GridSearchCV, train_test_split
 
 date_file = "../../data/ecoli.csv".replace('\\','/')
+# date_file = "content/pygsom/data/ecoli.csv".replace('\\','/')
+
 X,y = pp.pre_process(date_file)
 #try different combination of hyper paramenters
 parameters = [{'truncation_factor':[-1],'deformation_factor':[0],'k_neighbors':[3],
