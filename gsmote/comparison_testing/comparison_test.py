@@ -14,6 +14,7 @@ import gsmote.preprocessing as pp
 from gsmote.comparison_testing.compare_visual import visualize_data as vs
 import sys
 import pandas as pd
+import xgboost as xgb
 
 sys.path.append('../../')
 
@@ -57,6 +58,19 @@ def gradient_boosting():
     y_pred = np.where(y_predict.astype(int) > 0.5, 1, 0)
 
     return evaluate("Gradient Boosting", y_test, y_pred)
+
+
+def XGBoost():
+
+    # Fitting Gradient boosting
+    gbc = xgb.XGBClassifier(objective="binary:logistic", random_state=42)
+    gbc.fit(X_train, y_train)
+
+    # Predicting the Test set results
+    y_predict = gbc.predict(X_test)
+    y_pred = np.where(y_predict.astype(int) > 0.5, 1, 0)
+
+    return evaluate("XGBoost", y_test, y_pred)
 
 
 def KNN():
@@ -122,13 +136,15 @@ def GSOM_Classifier():
 
 performance1 = linear_training()
 performance2 = gradient_boosting()
-performance3 = KNN()
-performance4 = decision_tree()
-performance5 = MLPClassifier()
-performance6 = GSOM_Classifier()
+performance3 = XGBoost()
+performance4 = KNN()
+performance5 = decision_tree()
+performance6 = MLPClassifier()
+performance7 = GSOM_Classifier()
+
 
 labels = ["Classifier", "f_score","g_mean","auc_value"]
-values = [performance1,performance2,performance3,performance4,performance5,performance6]
+values = [performance1,performance2,performance3,performance4,performance5,performance6,performance7]
 
 scores = pd.DataFrame(values,columns=labels)
 print(scores)
