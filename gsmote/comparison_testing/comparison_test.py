@@ -13,25 +13,27 @@ from gsmote.comparison_testing.Evaluator import evaluate
 import gsmote.preprocessing as pp
 from gsmote.comparison_testing.compare_visual import visualize_data as vs
 import sys
+import pandas as pd
 
 sys.path.append('../../')
 
-date_file = "../../data/ecoli.csv".replace('\\', '/')
+date_file = "../../data/adultmini.csv".replace('\\', '/')
 # date_file = "content/pygsom/data/ecoli.csv".replace('\\', '/')
 
 X, y = pp.preProcess(date_file)
 
+X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-def linear_training(X, y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+# Visualize original data
+vs(X_t, y_t, "Original data")
 
-    # Visualize original data
-    vs(X_t, y_t, "Original data")
+# oversample
+X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+# visualize oversampled data
+vs(X_train, y_train, "Oversampled ")
 
-    # oversample
-    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
-    # visualize oversampled data
-    vs(X_train, y_train, "Oversampled ")
+def linear_training():
+
 
     # Fitting Simple Linear Regression to the Training set
     regressor = LinearRegression()
@@ -41,13 +43,10 @@ def linear_training(X, y):
     y_predict = regressor.predict(X_test)
     y_pred = np.where(y_predict > 0.5, 1, 0)
 
-    evaluate("Linear Regression", y_test, y_pred)
+    return evaluate("Linear Regression", y_test, y_pred)
 
 
-def gradient_boosting(X, y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+def gradient_boosting():
 
     # Fitting Gradient boosting
     gbc = GradientBoostingClassifier(n_estimators=100, learning_rate=0.01, max_depth=3)
@@ -57,12 +56,11 @@ def gradient_boosting(X, y):
     y_predict = gbc.predict(X_test)
     y_pred = np.where(y_predict.astype(int) > 0.5, 1, 0)
 
-    evaluate("Gradient Boosting", y_test, y_pred)
+    return evaluate("Gradient Boosting", y_test, y_pred)
 
 
-def KNN(X, y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+def KNN():
+
     # X_train,y_train = X_t,y_t
     # Fitting Simple Linear Regression to the Training set
     classifier = KNeighborsClassifier(n_neighbors=5, metric='minkowski', p=2)
@@ -71,13 +69,10 @@ def KNN(X, y):
     # Predicting the Test set results
     y_pred = classifier.predict(X_test).astype(int)
 
-    evaluate("KNN", y_test, y_pred)
+    return evaluate("KNN", y_test, y_pred)
 
 
-def decision_tree(X, y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+def decision_tree():
 
     # Fitting Simple Linear Regression to the Training set
     regressor = DecisionTreeRegressor()
@@ -87,12 +82,10 @@ def decision_tree(X, y):
     y_predict = regressor.predict(X_test)
     y_pred = np.where(y_predict > 0.5, 1, 0)
 
-    evaluate("Decision Tree", y_test, y_pred)
+    return evaluate("Decision Tree", y_test, y_pred)
 
 
-def MLPClassifier(X, y):
-    X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    X_train, y_train = GSMOTE.OverSample(X_t, y_t)
+def MLPClassifier():
 
     # Fitting MLPClassifier to the Training set
     from sklearn.neural_network import MLPClassifier
@@ -101,11 +94,41 @@ def MLPClassifier(X, y):
     mlp.fit(X_train, y_train)
     y_pred = mlp.predict(X_test).astype(int)
 
-    evaluate("MLPClassifier", y_test, y_pred)
+    return evaluate("MLPClassifier", y_test, y_pred)
+
+def GSOM_Classifier():
+
+    # y_train = y_train.astype(int)
+    y1 = np.copy(y_train)
+    y = np.column_stack([y1, y_train])
+    labels = ["Name", "label"]
+    y = np.vstack((labels, y))
+    frame = pd.DataFrame(y[1:, :], columns=y[0, :])
 
 
-# linear_training(X, y)
-gradient_boosting(X, y)
-# KNN(X, y)
-# decision_tree(X, y)
-# MLPClassifier(X, y)
+    from GSOM import GSOM
+
+    gsom1 = GSOM(.83, X_train.shape[1], max_radius=4)
+
+    gsom1.fit(X_train, 100, 50)
+    gsom1.labelling_gsom(X_train, frame, "Name", "label")
+    gsom1.finalize_gsom_label()
+
+    y_pred = gsom1.predict_values(X_test, y_test)
+    # print(y_pred)
+    # print("complete")
+    return evaluate("GSOM_Classifier",y_test,np.array(y_pred).astype(int))
+
+
+performance1 = linear_training()
+performance2 = gradient_boosting()
+performance3 = KNN()
+performance4 = decision_tree()
+performance5 = MLPClassifier()
+performance6 = GSOM_Classifier()
+
+labels = ["Classifier", "f_score","g_mean","auc_value"]
+values = [performance1,performance2,performance3,performance4,performance5,performance6]
+
+scores = pd.DataFrame(values,columns=labels)
+print(scores)

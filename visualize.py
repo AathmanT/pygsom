@@ -42,6 +42,14 @@ def show_gsom(output, max_count,index_col,label_col):
     #plt.show()
     plt.savefig("output/gsom_"+datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")+".png",dpi=1200)
 
+def findColor(count_0, count_1):
+    if count_0 > count_1:
+        color = 'blue'
+    elif count_0 < count_1:
+        color = 'red'
+    else:
+        color = 'orange'
+    return color
 
 # def _get_color_map(max_count, alpha=0.5):
 #
@@ -59,11 +67,3 @@ def show_gsom(output, max_count,index_col,label_col):
 #     return colors.ListedColormap(color_list, name='gsom_color_list')
 
 
-def findColor(count_0, count_1):
-    if count_0 > count_1:
-        color = 'blue'
-    elif count_0 < count_1:
-        color = 'red'
-    else:
-        color = 'orange'
-    return color

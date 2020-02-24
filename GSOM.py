@@ -318,7 +318,7 @@ class GSOM:
             self.smooth(data, radius_exp, current_learning_rate)
 
 
-    def predict(self, data_X, data_y, index_col, label_col):
+    def labelling_gsom(self, data_X, data_y, index_col, label_col):
         """
         Identify the winner nodes for test dataset
         Predict the winning node for each data point and create a pandas dataframe
@@ -404,12 +404,12 @@ class GSOM:
             tester = all_coordinates.loc[index].to_numpy().reshape(1, 2)
             distances = scipy.spatial.distance.cdist(all_coordinates, tester, self.distance)
 
-            distances = distances.argsort(axis=0)[:6]
+            distance_indexes = distances.argsort(axis=0)[:6]
 
             class_counter = Counter()
-            for distance in distances:
-                if (distance != index):
-                    label_of_node = self.node_labels.loc[distance, "Name"].values[0]
+            for dist_index in distance_indexes:
+                if (dist_index != index):
+                    label_of_node = self.node_labels.loc[dist_index, "Name"].values[0]
                     class_counter[label_of_node] += 1
             x = class_counter.most_common(1)[0][0]
             self.node_labels.loc[index, "Name"] = x
@@ -455,7 +455,9 @@ class GSOM:
             z=self.node_labels.loc[nearest_neighbors_indexes[i, 0], "Name"]
             class_counter2[z]+=1
         asag=class_counter2.most_common(1)
-        afaf=data_y.iloc[data_index,1]
+        # afaf=data_y.iloc[data_index,1]
+        afaf=data_y[data_index]
+
         print("Predicted :",class_counter2.most_common(1)[0][0],"Actual",afaf)
         return class_counter2.most_common(1)[0][0]
 
@@ -482,7 +484,7 @@ if __name__ == '__main__':
 
 
     gsom1.fit(X_f[:-10,:], 100, 50)
-    gsom1.predict(X_f[:-10,:],frame.iloc[:-10,:],"Name","label")
+    gsom1.labelling_gsom(X_f[:-10,:],frame.iloc[:-10,:],"Name","label")
     gsom1.finalize_gsom_label()
 
     y_pred = gsom1.predict_values(X_f[-10:,:],frame.iloc[-10:,:])
