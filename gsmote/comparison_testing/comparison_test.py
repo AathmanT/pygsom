@@ -139,6 +139,37 @@ def GSOM_Classifier():
     return evaluate("GSOM_Classifier",y_test,np.array(y_pred).astype(int))
 
 
+def Deep_One_Class_Classifier():
+    from sklearn.mixture import GaussianMixture
+    gmm = GaussianMixture(n_components=1)
+    gmm.fit(X_train[y_train=='1'])
+
+    OKscore = gmm.score_samples(X_train[y_train=='1'])
+    threshold = OKscore.mean() -  1* OKscore.std()
+
+    Trainer=np.column_stack((y_train[y_train=='1'],OKscore))
+    Trainer = np.vstack((["y_train","Score"],Trainer))
+    Train_Frame=pd.DataFrame(Trainer[1:,:],columns=Trainer[0,:])
+    Train_Stat = Train_Frame["Score"]
+    asd=pd.Series(OKscore).describe()
+    # vcng=pd.Series(OKscore[y_train=='0']).describe()
+
+    score = gmm.score_samples(X_test)
+
+    Tester = np.column_stack((y_test, score))
+
+
+    Test_Frame = pd.DataFrame(Tester,columns=["y_test","Score"])
+    Test_Stat = Test_Frame["Score"].describe()
+
+
+    # majority_correct = len(score[(y_test == 1) & (score > thred)])
+    y_pred = np.where(score > threshold,1,0)
+    return evaluate("Deep_One_Cls_Classifier",y_test,y_pred)
+
+
+
+
 performance1 = linear_training()
 performance2 = gradient_boosting()
 performance3 = XGBoost()
@@ -146,11 +177,12 @@ performance4 = KNN()
 performance5 = decision_tree()
 performance6 = MLPClassifier()
 performance7 = GSOM_Classifier()
+performance8 = Deep_One_Class_Classifier()
 
 
 labels = ["Classifier", "f_score","g_mean","auc_value"]
-values = [performance1,performance2,performance3,performance4,performance5,performance6,performance7]
-# values=[performance7]
+values = [performance1,performance2,performance3,performance4,performance5,performance6,performance7,performance8]
+# values=[performance9]
 scores = pd.DataFrame(values,columns=labels)
 scores.to_csv("output/scores_"+datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")+".csv")
 print(scores)
