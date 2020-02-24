@@ -35,7 +35,7 @@ def show_gsom(output, max_count,index_col,label_col):
             #c='yellow'
         ax.plot(x,y, 'o', color=findColor(count_0,count_1),markersize=1)
         # ax.annotate(label_str, (x, y), fontsize=2)
-        print("{},{}  ==> {}".format(x, y,label_str))
+        # print("{},{}  ==> {}".format(x, y,label_str))
         plt.text(x, y + 0.1, label_str, fontsize=2)
 
     ax.set_title("GSOM Map")

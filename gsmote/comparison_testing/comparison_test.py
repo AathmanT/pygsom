@@ -1,6 +1,7 @@
 # Importing the libraries
 # import sys
 # sys.path.append('/content/pygsom/')
+import datetime
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -29,9 +30,13 @@ X_t, X_test, y_t, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 vs(X_t, y_t, "Original data")
 
 # oversample
+print("Oversampling inprogress...")
 X_train, y_train = GSMOTE.OverSample(X_t, y_t)
 # visualize oversampled data
+print("Oversampling completed")
+print("Plotting oversampled data...")
 vs(X_train, y_train, "Oversampled ")
+print("Plotting completed")
 
 def linear_training():
 
@@ -124,7 +129,7 @@ def GSOM_Classifier():
 
     gsom1 = GSOM(.83, X_train.shape[1], max_radius=4)
 
-    gsom1.fit(X_train, 100, 50)
+    gsom1.fit(X_train,50, 25)
     gsom1.labelling_gsom(X_train, frame, "Name", "label")
     gsom1.finalize_gsom_label()
 
@@ -145,6 +150,7 @@ performance7 = GSOM_Classifier()
 
 labels = ["Classifier", "f_score","g_mean","auc_value"]
 values = [performance1,performance2,performance3,performance4,performance5,performance6,performance7]
-
+# values=[performance7]
 scores = pd.DataFrame(values,columns=labels)
+scores.to_csv("output/scores_"+datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")+".csv")
 print(scores)
